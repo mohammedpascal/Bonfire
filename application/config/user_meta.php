@@ -20,6 +20,24 @@
 //------------------------------------------------------------------------
 
 $config['user_meta_fields'] =  array(
+	array(
+		'name'   => 'age',
+		'label'   => lang('user_meta_street_name'),
+		'rules'   => 'trim|max_length[100]',
+		'frontend' => TRUE,
+		'form_detail' => array(
+			'type' => 'input',
+			'settings' => array(
+				'name'		=> 'age',
+				'id'		=> 'age',
+				'maxlength'	=> '100',
+				'class'		=> 'span6',
+//				'required'	=> TRUE,
+			),
+		),
+	)
+	);
+/*
 
 	array(
 		'name'   => 'state',
@@ -51,4 +69,4 @@ $config['user_meta_fields'] =  array(
 			),
 		),
 	),
-);
+);*/

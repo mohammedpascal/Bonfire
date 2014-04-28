@@ -4,7 +4,7 @@ $view =<<<END
 <?php
 
 \$num_columns	= {cols_total};
-\$can_delete	= \$this->auth->has_permission('{delete_permission}');
+\$can_delete	= false; //\$this->auth->has_permission('{delete_permission}');
 \$can_edit		= \$this->auth->has_permission('{edit_permission}');
 \$has_records	= isset(\$records) && is_array(\$records) && count(\$records);
 
@@ -14,7 +14,7 @@ $view =<<<END
 		<?php echo lang("{$module_name_lower}_area_title"); ?>
 	</h3>
 	<?php echo form_open(\$this->uri->uri_string()); ?>
-		<table class="table table-striped">
+		<table class="table table-striped table-bordered">
 			<thead>
 				<tr>
 					<?php if (\$can_delete && \$has_records) : ?>
@@ -76,6 +76,9 @@ for ($counter = 1; $field_total >= $counter; $counter++)
 					<th><?php echo lang("' . $module_name_lower . '_field_'.$name.'"); ?></th>';
 }
 
+$headers .= '
+					<th style="width: 50px"> <span class="icon-pencil"></span> Edit</th>';
+
 $field_prefix = '';
 
 // only add maintenance columns to view when module is creating a new db table
@@ -118,14 +121,11 @@ for ($counter = 1; $field_total >= $counter; $counter++)
 
 	$field_name = $field_prefix . set_value("view_field_name$counter");
 
+	
 	if ($counter == 1)
 	{
 		$table_records .= "
-				<?php if (\$can_edit) : ?>
-					<td><?php echo anchor(SITE_AREA . '/" . $controller_name . "/" . $module_name_lower . "/edit/' . \$record->" . $primary_key_field . ", {$pencil_icon} \$record->" . $field_name . "); ?></td>
-				<?php else : ?>
-					<td><?php e(\$record->" . $field_name . "); ?></td>
-				<?php endif; ?>";
+					<td><?php e(\$record->" . $field_name . "); ?></td>";
 	}
 	else
 	{
@@ -142,6 +142,13 @@ for ($counter = 1; $field_total >= $counter; $counter++)
 			$table_records .= '
 					<td><?php e($record->'.$field_name.') ?></td>';
 		}
+	}
+
+	if ( $counter == $field_total ){
+		$table_records .= "
+				<?php if (\$can_edit) : ?>
+					<td><?php echo anchor(SITE_AREA . '/" . $controller_name . "/" . $module_name_lower . "/edit/' . \$record->" . $primary_key_field . ", {$pencil_icon}' Edit' ); ?></td>
+				<?php endif; ?>";
 	}
 	
 }

@@ -143,6 +143,19 @@ class CI_Security {
 			return $this->csrf_set_cookie();
 		}
 
+		 global $RTR;
+		$module = $RTR->fetch_module();
+        $controller = $RTR->fetch_class();
+
+        //die("$module  $controller");
+
+        //TODO convert json body to post for save
+        if ( $module == "api" && $controller == "developer" ){
+        	$data = json_decode(file_get_contents('php://input'));
+        	$_POST[$this->_csrf_token_name] = $data->{$this->_csrf_token_name};
+        	$_POST["data"] = $data->data;
+        }
+
 		// Do the tokens exist in both the _POST and _COOKIE arrays?
 		if ( ! isset($_POST[$this->_csrf_token_name], $_COOKIE[$this->_csrf_cookie_name]))
 		{
