@@ -90,38 +90,6 @@ $mb_index = '
 	{
 ';
 
-if ($db_required != '')
-{
-	$mb_index .= "
-		// Deleting anything?
-		if (isset(\$_POST['delete']))
-		{
-			\$checked = \$this->input->post('checked');
-
-			if (is_array(\$checked) && count(\$checked))
-			{
-				\$result = FALSE;
-				foreach (\$checked as \$pid)
-				{
-					\$result = \$this->".$module_name_lower."_model->delete(\$pid);
-				}
-
-				if (\$result)
-				{
-					Template::set_message(count(\$checked) .' '. lang('".$module_name_lower."_delete_success'), 'success');
-				}
-				else
-				{
-					Template::set_message(lang('".$module_name_lower."_delete_failure') . \$this->".$module_name_lower."_model->error, 'error');
-				}
-			}
-		}
-
-		\$records = \$this->".$module_name_lower."_model->find_all();
-
-		Template::set('records', \$records);";
-}
-
 $mb_index .= "
 		Template::set('toolbar_title', 'Manage ".$module_name."');
 		Template::render();
@@ -152,125 +120,6 @@ if ($db_required != '')
 }
 
 $mb_index_front .= "
-		Template::render();
-	}
-
-	//--------------------------------------------------------------------
-
-";
-
-//--------------------------------------------------------------------
-
-$mb_create = "
-	/**
-	 * Creates a " . $module_name . " object.
-	 *
-	 * @return void
-	 */
-	public function create()
-	{
-		\$this->auth->restrict('{create_permission}');
-";
-
-if ($db_required != '')
-{
-	$mb_create .= "
-		if (isset(\$_POST['save']))
-		{
-			if (\$insert_id = \$this->save_".$module_name_lower."())
-			{
-				// Log the activity
-				log_activity(\$this->current_user->id, lang('".$module_name_lower."_act_create_record') .': '. \$insert_id .' : '. \$this->input->ip_address(), '".$module_name_lower."');
-
-				Template::set_message(lang('".$module_name_lower."_create_success'), 'success');
-				redirect(SITE_AREA .'/".$controller_name."/".$module_name_lower."');
-			}
-			else
-			{
-				Template::set_message(lang('".$module_name_lower."_create_failure') . \$this->".$module_name_lower."_model->error, 'error');
-			}
-		}";
-}
-
-$mb_create .= "
-		Assets::add_module_js('".$module_name_lower."', '".$module_name_lower.".js');
-
-		Template::set('toolbar_title', lang('".$module_name_lower."_create') . ' ".$module_name."');
-		Template::render();
-	}
-
-	//--------------------------------------------------------------------
-
-";
-
-//--------------------------------------------------------------------
-
-$mb_edit = "
-	/**
-	 * Allows editing of " . $module_name . " data.
-	 *
-	 * @return void
-	 */
-	public function edit()
-	{
-		\$id = \$this->uri->segment(5);
-
-		if (empty(\$id))
-		{
-			Template::set_message(lang('".$module_name_lower."_invalid_id'), 'error');
-			redirect(SITE_AREA .'/".$controller_name."/".$module_name_lower."');
-		}
-";
-
-if ($db_required != '')
-{
-	$mb_edit .= "
-		if (isset(\$_POST['save']))
-		{
-			\$this->auth->restrict('{edit_permission}');
-
-			if (\$this->save_".$module_name_lower."('update', \$id))
-			{
-				// Log the activity
-				log_activity(\$this->current_user->id, lang('".$module_name_lower."_act_edit_record') .': '. \$id .' : '. \$this->input->ip_address(), '".$module_name_lower."');
-
-				Template::set_message(lang('".$module_name_lower."_edit_success'), 'success');
-			}
-			else
-			{
-				Template::set_message(lang('".$module_name_lower."_edit_failure') . \$this->".$module_name_lower."_model->error, 'error');
-			}
-		}";
-
-	if (in_array('delete', $action_names))
-	{
-		$mb_edit .= "
-		else if (isset(\$_POST['delete']))
-		{
-			\$this->auth->restrict('{delete_permission}');
-
-			if (\$this->".$module_name_lower."_model->delete(\$id))
-			{
-				// Log the activity
-				log_activity(\$this->current_user->id, lang('".$module_name_lower."_act_delete_record') .': '. \$id .' : '. \$this->input->ip_address(), '".$module_name_lower."');
-
-				Template::set_message(lang('".$module_name_lower."_delete_success'), 'success');
-
-				redirect(SITE_AREA .'/".$controller_name."/".$module_name_lower."');
-			}
-			else
-			{
-				Template::set_message(lang('".$module_name_lower."_delete_failure') . \$this->".$module_name_lower."_model->error, 'error');
-			}
-		}";
-	}
-
-	$mb_edit .= "
-		Template::set('".$module_name_lower."', \$this->".$module_name_lower."_model->find(\$id));";
-}
-
-$mb_edit .= "
-		Template::set('toolbar_title', lang('".$module_name_lower."_edit') .' ".$module_name."');
 		Template::render();
 	}
 
@@ -555,8 +404,6 @@ if ($controller_name != $module_name_lower)
 
 	if (in_array('create', $action_names))
 	{
-		$body .= $mb_create;
-
 		$body = str_replace('{create_permission}', preg_replace("/[ -]/", "_", ucfirst($module_name)).'.'.ucfirst($controller_name).'.Create', $body);
 	}
 
@@ -566,7 +413,6 @@ if ($controller_name != $module_name_lower)
 
 	if (in_array('edit', $action_names))
 	{
-		$body .= $mb_edit;
 		$body = str_replace('{edit_permission}', preg_replace("/[ -]/", "_", ucfirst($module_name)).'.'.ucfirst($controller_name).'.Edit', $body);
 		$body = str_replace('{delete_permission}', preg_replace("/[ -]/", "_", ucfirst($module_name)).'.'.ucfirst($controller_name).'.Delete', $body);
 	}
@@ -655,4 +501,4 @@ echo $controller;
 
 // Clean up memory
 
-unset($body, $mb_class_wrapper, $mb_constructor, $mb_index, $mb_create, $mb_edit, $mb_delete, $mb_save, $controller);
+unset($body, $mb_class_wrapper, $mb_constructor, $mb_index, $mb_delete, $mb_save, $controller);
