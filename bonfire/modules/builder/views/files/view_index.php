@@ -1,62 +1,134 @@
+
 <?php if (!defined('BASEPATH')) exit('No direct script access allowed');
 
+$Module_name = ucfirst($module_name);
+$api_url = site_url(SITE_AREA .'/' . $controller_name . '/' . $module_name_lower);
+
 $view =<<<END
-<?php
+<script type="text/javascript">
 
-\$num_columns	= {cols_total};
-\$can_delete	= false; //\$this->auth->has_permission('{delete_permission}');
-\$can_edit		= \$this->auth->has_permission('{edit_permission}');
-\$has_records	= isset(\$records) && is_array(\$records) && count(\$records);
+	var {$module_name_lower}Module = angular.module('{$module_name_lower}Module',['ngRoute', 'CIBonfire']);
 
-?>
-<div class="admin-box">
-	<h3>
-		<?php echo lang("{$module_name_lower}_area_title"); ?>
-	</h3>
-	<?php echo form_open(\$this->uri->uri_string()); ?>
-		<table class="table table-striped table-bordered">
-			<thead>
-				<tr>
-					<?php if (\$can_delete && \$has_records) : ?>
-					<th class="column-check"><input class="check-all" type="checkbox" /></th>
-					<?php endif;?>
-					{table_header}
-				</tr>
-			</thead>
-			<?php if (\$has_records) : ?>
-			<tfoot>
-				<?php if (\$can_delete) : ?>
-				<tr>
-					<td colspan="<?php echo \$num_columns; ?>">
-						<?php echo lang('bf_with_selected'); ?>
-						<input type="submit" name="delete" id="delete-me" class="btn btn-danger" value="<?php echo lang('bf_action_delete'); ?>" onclick="return confirm('<?php e(js_escape(lang('{$module_name_lower}_delete_confirm'))); ?>')" />
-					</td>
-				</tr>
-				<?php endif; ?>
-			</tfoot>
-			<?php endif; ?>
-			<tbody>
-				<?php
-				if (\$has_records) :
-					foreach (\$records as \$record) :
-				?>
-				<tr>
-					<?php if (\$can_delete) : ?>
-					<td class="column-check"><input type="checkbox" name="checked[]" value="<?php echo \$record->{$primary_key_field}; ?>" /></td>
-					<?php endif;?>
-					{table_records}
-				</tr>
-				<?php
-					endforeach;
-				else:
-				?>
-				<tr>
-					<td colspan="<?php echo \$num_columns; ?>"><?php echo lang("{$module_name_lower}_records_empty"); ?></td>
-				</tr>
-				<?php endif; ?>
-			</tbody>
-		</table>
-	<?php echo form_close(); ?>
+	{$module_name_lower}Module.constant('{$module_name_lower}_url', '$api_url');
+
+	{$module_name_lower}Module.controller('{$Module_name}Controller', {$Module_name}Controller);
+
+
+	function {$Module_name}Controller (\$scope, \$http, \$timeout, {$module_name_lower}_url, BFModule) {
+		\$scope.records = [];
+
+		\$scope.record = {};
+		\$scope.oldRecord = {};
+		\$scope._info = "";
+		\$scope._wait = "";
+		\$scope._error = "";
+		
+		init();
+
+		function init(){
+			BFModule.create({$module_name_lower}_url).list({}, function(response){
+				\$scope.records = response.data;
+			});
+		}
+
+		\$scope.editRecord = function(record){
+			\$scope.oldRecord = record;
+			\$scope.record = angular.copy(record);
+			\$scope.active = "edit";
+		}
+
+		\$scope.saveRecord = function(){
+			\$scope._wait = true;
+			BFModule.create({$module_name_lower}_url).save( \$scope.record, function(response){
+				\$scope._wait = false;
+				if ( response.success ) {
+					if ( \$scope.record.id ){ //update
+						angular.copy(\$scope.record, \$scope.oldRecord);
+					}else{ //create
+						\$scope.records.push(response.data);
+						\$scope.record = {};
+					}
+					
+					\$scope.active = "list";
+				}else{
+					\$scope.showError(response.error);
+				}
+			});
+		}
+
+		\$scope.deleteRecord = function(){
+			\$scope._wait = true;
+			BFModule.create({$module_name_lower}_url).delete( \$scope.record.id, function(response){
+				\$scope._wait = false;
+				if ( response.success ) {
+					var index=\$scope.records.indexOf(\$scope.oldRecord);
+	  				\$scope.records.splice(index,1); 
+					\$scope.showInfo(response.data);
+					\$scope.active = "list";
+				}else{
+					\$scope.showError(response.error);
+				}
+			});
+		}
+
+		\$scope.cancel = function(){
+			\$scope.record = {};
+			\$scope.active = "list";
+		}
+
+		\$scope.showInfo = function(info){
+			\$scope._info = info;
+			\$timeout(function(){
+	            \$scope._info = "";
+	        },3000);
+		}
+
+		\$scope.showError = function(error){
+			\$scope._error = error;
+			\$timeout(function(){
+	            \$scope._error = "";
+	        },3000);
+		}
+	}
+
+</script>
+
+<?php \$can_edit = \$this->auth->has_permission('{edit_permission}'); ?>
+
+<div class="admin-box"  ng-app="{$module_name_lower}Module" ng-controller="{$Module_name}Controller" >
+
+	<div class="alert alert-success" ng-show="_info">
+		{{_info}}
+	</div>
+
+	<ul class="nav nav-pills" ng-init="active='list';loaded=true">
+	  <li ng-click="active='list'" ng-class="{ active: active=='list' }" ><a href="#">List</a></li>
+	  <li ng-click="active='create'; record={}" ng-class="{ active: active=='create' }" ><a href="#">Create</a></li>
+	  <li ng-show="active=='edit'" ng-class="{ active: active=='edit' }" ><a href="#">Edit</a></li>
+	</ul>
+
+	<br>
+
+	<div  ng-show="active=='create'" ng-include="'$api_url/file/create.php'"></div>
+
+	<div  ng-show="active=='edit'" ng-include="'$api_url/file/edit.php'"></div>
+
+	<table class="table table-striped table-bordered" ng-show="active=='list'">
+		<tr>
+			<th>ID</th>
+			{table_header} 
+		</tr>
+		<tr ng-repeat="row in records" >
+			<td ng-cloak >{{row.id}}</td>
+			{table_records}
+			<?php if (\$can_edit) : ?>
+			<td> <a href="#" ng-click="editRecord(row)">Edit</a></td>
+			<? endif ?>
+		</tr>
+	</table>
+
+	<br> <br> <br>
+
 </div>
 END;
 
@@ -73,11 +145,11 @@ for ($counter = 1; $field_total >= $counter; $counter++)
 	$label = set_value("view_field_label$counter");
 	$name = set_value("view_field_name$counter");
 	$headers .= '
-					<th><?php echo lang("' . $module_name_lower . '_field_'.$name.'"); ?></th>';
+			<th><?php echo lang("' . $module_name_lower . '_field_'.$name.'"); ?></th>';
 }
 
 $headers .= '
-					<th style="width: 50px"> <span class="icon-pencil"></span> Edit</th>';
+			<th style="width: 50px"> <span class="icon-pencil"></span> Edit</th>';
 
 $field_prefix = '';
 
@@ -122,34 +194,8 @@ for ($counter = 1; $field_total >= $counter; $counter++)
 	$field_name = $field_prefix . set_value("view_field_name$counter");
 
 	
-	if ($counter == 1)
-	{
-		$table_records .= "
-					<td><?php e(\$record->" . $field_name . "); ?></td>";
-	}
-	else
-	{
-		$field_name = set_value("view_field_name$counter");
-
-		// when building from existing table, modify output of the 'deleted' maintenance column
-		if  ($db_required == 'existing' && $field_name == $this->input->post("soft_delete_field"))
-		{
-			$table_records .= '
-					<td><?php echo $record->'.$field_name.' > 0 ? lang(\''.$module_name_lower.'_true\') : lang(\''.$module_name_lower.'_false\')?></td>';
-		}
-		else
-		{
-			$table_records .= '
-					<td><?php e($record->'.$field_name.') ?></td>';
-		}
-	}
-
-	if ( $counter == $field_total ){
-		$table_records .= "
-				<?php if (\$can_edit) : ?>
-					<td><?php echo anchor(SITE_AREA . '/" . $controller_name . "/" . $module_name_lower . "/edit/' . \$record->" . $primary_key_field . ", {$pencil_icon}' Edit' ); ?></td>
-				<?php endif; ?>";
-	}
+	$table_records .= "
+			<td no-cloak >{{row.$field_name}}</td>";
 	
 }
 

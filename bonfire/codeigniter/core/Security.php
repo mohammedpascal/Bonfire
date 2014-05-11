@@ -143,28 +143,48 @@ class CI_Security {
 			return $this->csrf_set_cookie();
 		}
 
-		 global $RTR;
+		global $RTR;
 		$module = $RTR->fetch_module();
         $controller = $RTR->fetch_class();
 
-        //die("$module  $controller");
+        // if user is accessing api the request should be treated differently
+        $is_api = isset( $RTR->uri->segments[4]) && strpos($RTR->uri->segments[4], "api_") == 0;
 
-        //TODO convert json body to post for save
-        if ( $module == "api" && $controller == "developer" ){
-        	$data = json_decode(file_get_contents('php://input'));
-        	$_POST[$this->_csrf_token_name] = $data->{$this->_csrf_token_name};
-        	$_POST["data"] = $data->data;
+        if ( $is_api ) {
+        	$csrf_token_name = $this->_csrf_token_name;
+
+        	//read request body and json decode it
+        	$request = json_decode(file_get_contents('php://input'));
+        	if ( isset($request->$csrf_token_name) ) {
+		        $_POST[$csrf_token_name] = $request->$csrf_token_name;
+		        unset($request->$csrf_token_name);
+		        $_POST["json"] = $request;
+	    	}else{
+	    		$_POST["json"] =  json_encode((object)array());
+	    	}
         }
 
 		// Do the tokens exist in both the _POST and _COOKIE arrays?
 		if ( ! isset($_POST[$this->_csrf_token_name], $_COOKIE[$this->_csrf_cookie_name]))
 		{
+			if ( $is_api ){
+				header('Content-type: application/json');
+				$response->success = false;
+				$response->error = "Unauthorized access";
+				die(json_encode($response));
+			}
 			$this->csrf_show_error();
 		}
 
 		// Do the tokens match?
 		if ($_POST[$this->_csrf_token_name] != $_COOKIE[$this->_csrf_cookie_name])
 		{
+			if ( $is_api ){
+				header('Content-type: application/json');
+				$response->success = false;
+				$response->error = "Invalid request";
+				die(json_encode($response));
+			}
 			$this->csrf_show_error();
 		}
 

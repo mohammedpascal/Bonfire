@@ -106,7 +106,7 @@ for ($counter = 1; $field_total >= $counter; $counter++)
 			$field_name = set_value("view_field_name$counter");
 	}
 
-	$form_name = $module_name_lower . '_' . set_value("view_field_name$counter");
+	$form_name = $field_name; // $module_name_lower . '_' . set_value("view_field_name$counter");
 	$rules .= '
 		array(
 			"field"		=> "'. $form_name .'",

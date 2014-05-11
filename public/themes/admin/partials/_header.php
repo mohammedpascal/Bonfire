@@ -20,6 +20,11 @@
 	<meta name="robots" content="noindex" />
 	<?php echo Assets::css(null, true); ?>
 
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.15/angular-route.min.js"></script>
+  <script src="<?php echo Template::theme_url('js/cibonfire.js'); ?>"></script>
+
 	<script src="<?php echo Template::theme_url('js/modernizr-2.5.3.js'); ?>"></script>
 </head>
 <body class="desktop">

@@ -43,6 +43,13 @@ $mb_constructor = "
 	{
 		parent::__construct();
 
+		\$this->is_api = isset( \$this->uri->segments[4]) && strpos(\$this->uri->segments[4], 'api_') == 0 ;
+
+		if ( \$this->is_api ){
+			\$this->_restrict('Contact.Content.View');
+			header('Content-type: application/json');
+		}
+
 		{restrict}";
 
 if ($db_required != '')
@@ -59,11 +66,11 @@ $mb_constructor .= "
 if ($controller_name != $module_name_lower)
 {
 	$mb_constructor .= "
-		Template::set_block('sub_nav', '" . $controller_name_lower . "/_sub_nav');";
+		//Template::set_block('sub_nav', '" . $controller_name_lower . "/_sub_nav');";
 }
 
 $mb_constructor .= '
-
+		Assets::add_js("codeigniter-csrf.js");
 		Assets::add_module_js(\'' . $module_name_lower . '\', \'' . $module_name_lower . '.js\');
 	}
 
@@ -273,6 +280,9 @@ $mb_edit .= "
 
 //--------------------------------------------------------------------
 
+//starts with capital letter
+$Module_name = ucfirst($module_name);
+
 $mb_save =<<<END
 	//--------------------------------------------------------------------
 	// !PRIVATE METHODS
@@ -318,6 +328,113 @@ $mb_save =<<<END
 	}
 
 	//--------------------------------------------------------------------
+	// !API METHODS
+	//--------------------------------------------------------------------
+
+	public function file(\$file){
+		\$this->load->view("content/\$file");
+	}
+
+	private function _restrict(\$perm, \$msg='Permission denied'){
+		if ( !\$this->auth->has_permission(\$perm) ){
+			\$this->_error(\$msg);
+		}
+	}
+
+	private function _error(\$msg){
+		\$response->success = false;
+		\$response->error = \$msg;
+		die(json_encode(\$response));
+	}
+
+	//POST module/api_list { skip:0, limit: 10}
+	public function api_list(\$skip=0, \$limit=''){
+		\$this->_restrict('{$Module_name}.Content.View', 'Permission denied');
+		header('Content-type: application/json');
+		\$json = isset(\$_POST['json']) ? \$_POST['json'] : (object)array();
+		
+		\$skip = intval(\$skip);
+		\$limit = intval(\$limit);
+
+		\$records = \$limit == 0 ? \$this->{$module_name_lower}_model->offset(\$skip)->find_all() : \$this->{$module_name_lower}_model->offset(\$skip)->limit(\$limit)->find_all();
+		echo '{"success":true, "data":[';
+		if ( !\$records ){
+			die(']}');
+		}
+
+		\$first = true;
+		foreach (\$records as \$row) {
+			if ( \$first ){
+				echo json_encode(\$row);
+				\$first = false;
+			}else{
+				echo ','.json_encode(\$row);
+			}
+			 
+		}
+		echo "]}";
+	}
+
+	//POST modile/api_save { }
+	public function api_save(){
+		header('Content-type: application/json');
+		\$this->_restrict('{$Module_name}.Content.Edit', 'Permission denied');
+		\$json = \$_POST['json'];
+		
+		\$id = isset(\$json->id) ? \$json->id : 0 ;
+
+		unset(\$_POST['json']);
+		\$_POST = (array)\$json;
+
+		if ( \$id === 0 ){
+			if ( \$insert_id = \$this->save_{$module_name_lower}() ){
+				\$response->success = true;
+				\$response->data = \$this->{$module_name_lower}_model->find(\$insert_id);
+				die(json_encode(\$response));
+			}
+
+			\$this->_error(lang('{$module_name_lower}_create_failure')."\\n".validation_errors().\$this->{$module_name_lower}_model->error);
+		}
+
+		if (\$this->save_{$module_name_lower}('update', \$id)){
+			\$response->success = true;
+			\$response->data = \$this->{$module_name_lower}_model->find(\$id);
+			die(json_encode(\$response));
+		}
+
+		\$this->_error(lang('{$module_name_lower}_edit_failure').' '.validation_errors().' '.\$this->{$module_name_lower}_model->error);
+	}
+
+	//GET module/api/get/:id
+	public function api_get(\$id="0"){
+		\$this->_restrict('{$Module_name}.Content.View', 'Permission denied');
+		header('Content-type: application/json');
+		\$record = \$this->{$module_name_lower}_model->find(intval(trim(\$id)));
+		if ( !\$record ){
+			\$result->error = 'record not found';
+			\$result->success = false;
+			die(json_encode(\$result));
+		}
+
+		\$result->data = \$record;
+		\$result->success = true;
+
+		die(json_encode(\$result));
+	}
+
+	//GET module/api_delete/:id
+	public function api_delete(\$id=0){
+		\$this->_restrict('{$Module_name}.Content.Delete', 'Permission denied');
+		header('Content-type: application/json');
+
+		if ( \$this->{$module_name_lower}_model->delete(\$id) ){
+			\$response->success = true;
+			\$response->data = lang('{$module_name_lower}_delete_success');
+			die(json_encode(\$response));
+		}
+		
+		\$this->_error(lang('{$module_name_lower}_delete_failure') . \$this->{$module_name_lower}_model->error );
+	}
 
 END;
 
@@ -491,7 +608,7 @@ if ($controller_name != $module_name_lower)
 				$field_name = set_value("view_field_name$counter");
 		}
 
-		$form_name = $module_name_lower . '_' . set_value("view_field_name$counter");
+		$form_name = $field_name; //$module_name_lower . '_' . set_value("view_field_name$counter");
 
 
 		// setup the data array for saving to the db

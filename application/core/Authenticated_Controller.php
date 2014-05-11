@@ -30,6 +30,15 @@ class Authenticated_Controller extends Base_Controller
 		$this->load->library('users/auth');
 
 		// Make sure we're logged in.
+		if ( isset( $this->uri->segments[4]) && strpos($this->uri->segments[4], "api_") == 0 ){
+			if ( !$this->auth->is_logged_in() ){
+				header('Content-type: application/json');
+				$response->success = false;
+				$response->error = "please login";
+				die(json_encode($response));
+			}
+		}
+
 		$this->auth->restrict();
 
 		$this->set_current_user();
