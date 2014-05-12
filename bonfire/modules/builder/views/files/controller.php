@@ -206,22 +206,23 @@ $mb_save =<<<END
 		\$limit = intval(\$limit);
 
 		\$records = \$limit == 0 ? \$this->{$module_name_lower}_model->offset(\$skip)->find_all() : \$this->{$module_name_lower}_model->offset(\$skip)->limit(\$limit)->find_all();
-		echo '{"success":true, "data":[';
+		\$this->output->append_output('{"success":true, "data":[');
 		if ( !\$records ){
-			die(']}');
+			\$this->output->append_output(']}');
+			return;
 		}
 
 		\$first = true;
 		foreach (\$records as \$row) {
 			if ( \$first ){
-				echo json_encode(\$row);
+				\$this->output->append_output(json_encode(\$row));
 				\$first = false;
 			}else{
-				echo ','.json_encode(\$row);
+				\$this->output->append_output(','.json_encode(\$row));
 			}
 			 
 		}
-		echo "]}";
+		\$this->output->append_output("]}");
 	}
 
 	//POST modile/api_save { }

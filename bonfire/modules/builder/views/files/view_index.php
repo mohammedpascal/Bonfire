@@ -113,7 +113,13 @@ $view =<<<END
 
 	<div  ng-show="active=='edit'" ng-include="'$api_url/file/edit.php'"></div>
 
-	<table class="table table-striped table-bordered" ng-show="active=='list'">
+	<div class="input-prepend" ng-show="active=='list' && records" >
+	  <span class="add-on">Filter</span>
+	  <input class="span2" id="prependedInput" type="text" ng-model="filterText" placeholder="keyword">
+	</div>
+
+	<table class="table table-striped table-bordered" ng-show="active=='list' && records" >
+
 		<tr>
 			<th>ID</th>
 			{table_header} 
