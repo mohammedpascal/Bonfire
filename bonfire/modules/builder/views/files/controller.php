@@ -197,13 +197,13 @@ $mb_save =<<<END
 	}
 
 	//POST module/api_list { skip:0, limit: 10}
-	public function api_list(\$skip=0, \$limit=''){
+	public function api_list(){
 		\$this->_restrict('{$Module_name}.Content.View', 'Permission denied');
 		header('Content-type: application/json');
 		\$json = isset(\$_POST['json']) ? \$_POST['json'] : (object)array();
 		
-		\$skip = intval(\$skip);
-		\$limit = intval(\$limit);
+		\$skip = isset(\$json->skip) ? intval(\$json->skip) : 0;
+		\$limit = isset(\$json->limit) ? intval(\$json->limit) : 0;
 
 		\$records = \$limit == 0 ? \$this->{$module_name_lower}_model->offset(\$skip)->find_all() : \$this->{$module_name_lower}_model->offset(\$skip)->limit(\$limit)->find_all();
 		\$this->output->append_output('{"success":true, "data":[');
@@ -255,11 +255,14 @@ $mb_save =<<<END
 		\$this->_error(lang('{$module_name_lower}_edit_failure').' '.validation_errors().' '.\$this->{$module_name_lower}_model->error);
 	}
 
-	//GET module/api/get/:id
-	public function api_get(\$id="0"){
+	//POST module/api/get { id: 12 }
+	public function api_get(){
 		\$this->_restrict('{$Module_name}.Content.View', 'Permission denied');
 		header('Content-type: application/json');
-		\$record = \$this->{$module_name_lower}_model->find(intval(trim(\$id)));
+		\$json = isset(\$_POST['json']) ? \$_POST['json'] : (object)array();
+
+		\$record =  isset(\$json->id) ? \$this->{$module_name_lower}_model->find(intval(trim(\$json->id))) : false;
+
 		if ( !\$record ){
 			\$result->error = 'record not found';
 			\$result->success = false;
@@ -272,12 +275,15 @@ $mb_save =<<<END
 		die(json_encode(\$result));
 	}
 
-	//GET module/api_delete/:id
-	public function api_delete(\$id=0){
+	//POST module/api_delete { id: 12 }
+	public function api_delete(){
 		\$this->_restrict('{$Module_name}.Content.Delete', 'Permission denied');
 		header('Content-type: application/json');
+		\$json = isset(\$_POST['json']) ? \$_POST['json'] : (object)array();
 
-		if ( \$this->{$module_name_lower}_model->delete(\$id) ){
+		\$deleted =  isset(\$json->id) ? \$this->{$module_name_lower}_model->delete(intval(trim(\$json->id))) : false;
+
+		if ( \$deleted ){
 			\$response->success = true;
 			\$response->data = lang('{$module_name_lower}_delete_success');
 			die(json_encode(\$response));

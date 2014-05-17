@@ -7,7 +7,7 @@ function BFModule($http){
     	 create: function(module){
 	    	return {
 	    		get: function(id, callback){
-		    		fac.get(module+"/api_get/"+id, callback);
+		    		fac.post(module+"/api_get", { id: id }, callback);
 		    	},
 		    	save: function(data, callback){
 		    		fac.post(module+"/api_save", data, callback);
@@ -16,7 +16,7 @@ function BFModule($http){
 		    		fac.post(module+"/api_list", query, callback);
 		    	},
 		    	delete: function(id, callback){
-		    		fac.get(module+"/api_delete/"+id, callback);
+		    		fac.post(module+"/api_delete", { id: id }, callback);
 		    	}
 	    	};
 	    },

@@ -128,10 +128,14 @@ $view =<<<END
 			<td ng-cloak >{{row.id}}</td>
 			{table_records}
 			<?php if (\$can_edit) : ?>
-			<td> <a href="#" ng-click="editRecord(row)">Edit</a></td>
+			<td> <a href="#" ng-click="editRecord(row)"><span class="icon-pencil"></span> Edit</a></td>
 			<? endif ?>
 		</tr>
 	</table>
+
+	<div class="well" ng-show="active=='list' && records.length==0" >
+		No records found
+	</div>
 
 	<br> <br> <br>
 
