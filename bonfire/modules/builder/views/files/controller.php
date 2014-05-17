@@ -11,6 +11,9 @@
 $controller_name_lower = strtolower($controller_name);
 $primary_key_field = set_value("primary_key_field");
 
+//starts with capital letter
+$Module_name = ucfirst($module_name);
+
 //--------------------------------------------------------------------
 // !CLASS PARTS
 //--------------------------------------------------------------------
@@ -46,7 +49,7 @@ $mb_constructor = "
 		\$this->is_api = isset( \$this->uri->segments[4]) && strpos(\$this->uri->segments[4], 'api_') == 0 ;
 
 		if ( \$this->is_api ){
-			\$this->_restrict('Contact.Content.View');
+			\$this->_restrict('{$Module_name}.Content.View');
 			header('Content-type: application/json');
 		}
 
@@ -129,8 +132,7 @@ $mb_index_front .= "
 
 //--------------------------------------------------------------------
 
-//starts with capital letter
-$Module_name = ucfirst($module_name);
+
 
 $mb_save =<<<END
 	//--------------------------------------------------------------------
