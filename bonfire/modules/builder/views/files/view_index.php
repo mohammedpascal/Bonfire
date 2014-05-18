@@ -2,14 +2,14 @@
 <?php if (!defined('BASEPATH')) exit('No direct script access allowed');
 
 $Module_name = ucfirst($module_name);
-$api_url = site_url(SITE_AREA .'/' . $controller_name . '/' . $module_name_lower);
+$api_url = SITE_AREA .'/' . $controller_name . '/' . $module_name_lower;
 
 $view =<<<END
 <script type="text/javascript">
 
 	var {$module_name_lower}Module = angular.module('{$module_name_lower}Module',['ngRoute', 'CIBonfire']);
 
-	{$module_name_lower}Module.constant('{$module_name_lower}_url', '$api_url');
+	{$module_name_lower}Module.constant('{$module_name_lower}_url', '<?=site_url("$api_url")?>');
 
 	{$module_name_lower}Module.controller('{$Module_name}Controller', {$Module_name}Controller);
 
@@ -109,9 +109,9 @@ $view =<<<END
 
 	<br>
 
-	<div  ng-show="active=='create'" ng-include="'$api_url/file/create.php'"></div>
+	<div  ng-show="active=='create'" ng-include="'<?=site_url("$api_url")?>/file/create.php'"></div>
 
-	<div  ng-show="active=='edit'" ng-include="'$api_url/file/edit.php'"></div>
+	<div  ng-show="active=='edit'" ng-include="'<?=site_url("$api_url")?>/file/edit.php'"></div>
 
 	<div class="input-prepend" ng-show="active=='list' && records" >
 	  <span class="add-on">Filter</span>
